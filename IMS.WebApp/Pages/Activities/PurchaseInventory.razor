@@ -1,0 +1,57 @@
+﻿@page "/purchase"
+@attribute [Authorize]
+@inject IPurchaseInventoryUseCase PurchaseUseCase
+
+<h3>Purchase Inventory</h3>
+<br />
+
+@if (purchaseViewModel != null)
+{
+    <EditForm Model="purchaseViewModel" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+        <div class="form-group">
+            <label for="po">Purchase Order</label>
+            <InputText id="po" @bind-Value="purchaseViewModel.PurchaseNumber" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="inv">Inventory to Purchase</label>
+            <ViewInventoriesComponent DisplaySearchResult="true"
+                                  OnInventorySelected="OnSelectInventory"></ViewInventoriesComponent>
+            <InputText id="inv" class="form-control" @bind-Value="purchaseViewModel.InventoryName" disabled></InputText>
+            @*<input class="form-control" type="text" id="inv" disabled value="@selectedInventory?.InventoryName"/>*@
+            <input type="hidden" value="@purchaseViewModel?.InventoryId" />
+            @if (selectedInventory != null)
+            {
+                <text>Price:</text>
+                @selectedInventory.Price.ToString("c")
+                ;
+            }
+        </div>
+        <div class="form-group">
+            <label for="qty">Quantity</label>
+            <InputNumber id="qty" @bind-Value="purchaseViewModel.QuantityToPurchase" class="form-control"></InputNumber>
+        </div>
+        <br />
+        <button type="submit" class="btn btn-primary">Purchase</button>
+    </EditForm>
+}
+
+@code {
+    private Inventory selectedInventory;
+    private PurchaseViewModel purchaseViewModel = new PurchaseViewModel();
+    private void OnSelectInventory(Inventory inventory)
+    {
+        this.selectedInventory = inventory;
+        purchaseViewModel.InventoryId = inventory.InventoryId;
+        purchaseViewModel.InventoryName = inventory.InventoryName;
+    }
+    private async void OnValidSubmit()
+    {
+        await PurchaseUseCase.ExecuteAsync(purchaseViewModel.PurchaseNumber, selectedInventory,
+        purchaseViewModel.QuantityToPurchase, "Dharmendra");
+
+        this.purchaseViewModel = new PurchaseViewModel();
+        this.selectedInventory = null;
+    }
+}

@@ -1,0 +1,63 @@
+﻿@inject IViewInventoriesByNameUseCase ViewInventoriesByNameUseCase
+<div class="input-group">
+    <input type="text" 
+    @bind-value="InventoryNameToSearch"
+    @bind-value:event="oninput"
+    class="form-control form-control-lg"
+    placeholder="Type name here to search"/>
+    <button type="button" class="input-group-text btn-success"
+    @onclick="(async ()=>{await ViewInventories(); })"
+    >View</button>
+</div>
+@if(DisplaySearchResult && inventories != null && selectedInventory==null)
+{
+    <div style="overflow-y:auto;max-height:300px;border:1px solid silver;padding-top:5px">
+        <ul style="list-style-type:none">
+            @foreach (var item in inventories)
+            {
+                <li style="cursor:pointer" 
+                 @onclick="(async()=>{await SelectInventory(item);})"
+                 @key="item.InventoryId">@item.InventoryName</li>
+            }
+           
+        </ul>
+    </div>
+}
+@code {
+    private string? _inventoryNameToSearch;
+    public string? InventoryNameToSearch
+    {
+        get=> _inventoryNameToSearch;
+        set
+        {
+            _inventoryNameToSearch = value;
+            if (!string.IsNullOrWhiteSpace(_inventoryNameToSearch) && _inventoryNameToSearch.Length>2)
+            {
+                ViewInventories();
+            }
+        }
+    }
+    private List<Inventory>? inventories;
+    private Inventory? selectedInventory = null;
+    [Parameter]
+    public EventCallback<List<Inventory>> OnSearchInventory{ get; set; }
+
+    [Parameter]
+    public bool DisplaySearchResult { get; set; } = false;
+    [Parameter]
+    public EventCallback<Inventory> OnInventorySelected { get; set; }
+
+    private async Task ViewInventories()
+    {
+        inventories = (await ViewInventoriesByNameUseCase.ExecuteAsync(InventoryNameToSearch ?? string.Empty))?.ToList();
+        await OnSearchInventory.InvokeAsync(inventories);
+        selectedInventory = null;
+        StateHasChanged();
+    }
+    private async Task SelectInventory(Inventory inv)
+    {
+        await OnInventorySelected.InvokeAsync(inv);
+        selectedInventory = inv;
+        InventoryNameToSearch = string.Empty;
+    }
+}

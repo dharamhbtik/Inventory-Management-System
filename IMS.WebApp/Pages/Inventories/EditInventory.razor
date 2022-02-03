@@ -1,0 +1,48 @@
+﻿@page "/editinventory/{invId:int}"
+@attribute [Authorize]
+@inject NavigationManager NavManager
+@inject IViewInventoriesByIdUseCase ViewById
+@inject IEditInventoryUseCase EditUseCase
+<h3>Edit Inventory</h3>
+@if (inventory != null)
+{
+    <EditForm Model="inventory" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+        <div class="form-group">
+            <label for="name">Inventory Name</label>
+            <InputText id="name" @bind-Value="inventory.InventoryName" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="qty">Quantity</label>
+            <InputNumber id="qty" @bind-Value="inventory.Quantity" class="form-control"></InputNumber>
+        </div>
+        <div class="form-group">
+            <label for="price">Price</label>
+            <InputNumber id="price" @bind-Value="inventory.Price" class="form-control"></InputNumber>
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int invId { get; set; }
+
+    private Inventory? inventory;
+
+    protected override async Task OnInitializedAsync()
+    {
+        inventory = await ViewById.ExecuteAsync(invId);
+
+    }
+    public async void OnValidSubmit()
+    {
+        if (inventory != null)
+        {
+            await EditUseCase.ExecuteAsync(inventory);
+            NavManager.NavigateTo("/inventories");
+        }
+
+    }
+}

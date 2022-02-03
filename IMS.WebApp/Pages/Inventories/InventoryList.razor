@@ -1,0 +1,53 @@
+﻿@page "/inventories"
+@attribute [Authorize]
+@inject NavigationManager NavManager
+@inject IViewInventoriesByNameUseCase ViewInventoriesByNameUseCase
+
+<div class="d-flex justify-content-start">
+    <div class="w-25">
+        <h3>Inventory List</h3>
+    </div>
+    <button type="button" class="btn btn-primary" @onclick="AddInventory"><span class="oi oi-plus" aria-hidden="true"></span> Add Inventory</button>
+</div>
+<br />
+<div class="table-responsive">
+<ViewInventoriesComponent OnSearchInventory="OnSearchInventories" ></ViewInventoriesComponent>
+@if (inventories != null && inventories.Count > 0)
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in inventories)
+            {
+                <InventoryItemComponent Inventory="item"></InventoryItemComponent>
+            }
+
+        </tbody>
+    </table>
+}
+</div>
+<br />
+
+@code {
+    private List<Inventory>? inventories;
+    private void OnSearchInventories(List<Inventory> invs)
+    {
+        inventories = invs;
+    }
+    private void AddInventory()
+    {
+        NavManager.NavigateTo("/addinventory");
+    }
+   
+    protected async override Task OnInitializedAsync()
+    {
+        inventories = (await ViewInventoriesByNameUseCase.ExecuteAsync())?.ToList();
+    }
+}

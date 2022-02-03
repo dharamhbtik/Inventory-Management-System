@@ -1,0 +1,62 @@
+﻿@page "/products"
+@attribute [Authorize]
+@inject NavigationManager NavManager
+@inject IViewProductsByNameUseCase ViewProducts
+<div class="d-flex justify-content-start">
+    <div class="w-25">
+        <h3>Products List</h3>
+    </div>
+    <button type="button" class="btn btn-primary" @onclick="AddProduct"><span class="oi oi-plus" aria-hidden="true"></span>  Add Product</button>
+</div>
+<br />
+<div class="table-responsive">
+<ViewProductsComponent OnSearchProduct="OnSearchProducts"></ViewProductsComponent>
+@if (products != null && products.Count > 0)
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in products)
+            {
+                <ProductItemComponent Product="item" OnProductDelete="ProductDelete"></ProductItemComponent>
+            }
+
+        </tbody>
+    </table>
+}
+</div>
+<br />
+
+@code {
+    private List<Product>? products;
+    private void OnSearchProducts(List<Product> prods)
+    {
+        products = prods;
+    }
+    private void AddProduct()
+    {
+        NavManager.NavigateTo("/addproduct");
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        await LoadProducts();
+
+    }
+    private async void ProductDelete()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+         products = (await ViewProducts.ExecuteAsync())?.ToList();
+    }
+}

@@ -1,0 +1,60 @@
+﻿@page "/sellproduct"
+@attribute [Authorize]
+@inject ISellProductUseCase SellProductUseCase
+<h3>Sell Product</h3>
+<br/>
+<ErrorMessageComponent ErrorMessage="@errorMessage"></ErrorMessageComponent>
+@if (sellViewModel != null)
+{
+    <EditForm Model="sellViewModel" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+        <div class="form-group p-1">
+            <label for="po">Sales Order Number</label>
+            <InputText id="po" @bind-Value="sellViewModel.SalesOrderNumber" class="form-control"></InputText>
+        </div>
+        <div class="form-group p-1">
+            <label for="inv">Product to Produce</label>
+            <ViewProductsComponent 
+                                    DisplaySearchResult="true"
+                                   OnProductSelected="OnProductSelected"></ViewProductsComponent>
+            <InputText id="inv" class="form-control" @bind-Value="sellViewModel.ProductName" disabled></InputText>
+            <input type="hidden" value="@sellViewModel?.ProductId" />
+        </div>
+         <div class="form-group p-1">
+            <label for="price">Price</label>
+            <InputNumber id="price" @bind-Value="sellViewModel.ProductPrice" class="form-control"></InputNumber>
+        </div>
+        <div class="form-group p-1">
+            <label for="qty">Quantity</label>
+            <InputNumber id="qty" @bind-Value="sellViewModel.QuantityToSell" class="form-control"></InputNumber>
+        </div>
+        <br />
+        <button type="submit" class="btn btn-primary">Produce</button>
+    </EditForm>
+}
+
+@code {
+    private string errorMessage;
+    private SellViewModel sellViewModel = new SellViewModel();
+    private Product selectedProduct;
+    private async void OnProductSelected(Product product)
+    {
+        selectedProduct = product;
+        sellViewModel.ProductId = product.ProductId;
+        sellViewModel.ProductName = product.ProductName;
+        sellViewModel.ProductPrice = product.Price;
+    }
+    private async void OnValidSubmit()
+    {
+        this.errorMessage = string.Empty;
+        if(this.selectedProduct.Quantity < this.sellViewModel.QuantityToSell)
+        {
+            this.errorMessage = $"The quantity of the product is not enough. Only {this.selectedProduct.Quantity} are available";
+            return;
+        }
+        await SellProductUseCase.ExecuteAsync(sellViewModel.SalesOrderNumber, selectedProduct, sellViewModel.QuantityToSell, "DHarmendra");
+        sellViewModel = new SellViewModel();
+        selectedProduct = null;
+    }
+}

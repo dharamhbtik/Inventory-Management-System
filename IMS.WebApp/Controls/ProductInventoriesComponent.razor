@@ -1,0 +1,66 @@
+﻿<div class="form-group">
+    <label for="price">Inventories</label>
+    <ViewInventoriesComponent DisplaySearchResult="true"
+                              OnInventorySelected="SelectedInventory" />
+</div>
+@if (ProductInventories != null && ProductInventories.Count > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in this.ProductInventories)
+            {
+                <tr>
+                    <td>
+                        @item.Inventory.InventoryName
+                    </td>
+                    <td>
+                        <input type="number" min="0" @bind-value="item.InventoryQuantity"
+                       @bind-value:event="oninput"
+                       @onchange="OnInventoryQuantityChanged" />
+                    </td>
+                    <td>
+                        <button class="btn btn-link" type="button" @onclick="(()=>RemoveInventory(item))">
+                            <span class="oi oi-x" aria-hidden="true"></span>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+@code {
+
+    [Parameter]
+    public EventCallback<List<ProductInventory>> OnInventorySelected { get; set; }
+
+    [Parameter]
+    public List<ProductInventory> ProductInventories { get; set; } = new List<ProductInventory>();
+
+    private async void SelectedInventory(Inventory inventory)
+    {
+        if (!ProductInventories.Any(x => x.Inventory.InventoryName.Equals(inventory.InventoryName, StringComparison.OrdinalIgnoreCase)))
+        {
+            this.ProductInventories.Add(new ProductInventory
+                {
+                    InventoryId = inventory.InventoryId,
+                    Inventory = inventory
+                });
+        }
+        await OnInventorySelected.InvokeAsync(this.ProductInventories);
+    }
+    private void RemoveInventory(ProductInventory inv)
+    {
+        this.ProductInventories.Remove(inv);
+    }
+    private async Task OnInventoryQuantityChanged()
+    {
+        await OnInventorySelected.InvokeAsync(this.ProductInventories);
+    }
+}

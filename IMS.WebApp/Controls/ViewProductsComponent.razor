@@ -1,0 +1,68 @@
+﻿@inject IViewProductsByNameUseCase ViewProductsByNameUseCase
+<div class="input-group mb-3">
+    <input type="text"
+           @bind-value="ProductNameToSearch"
+           @bind-value:event="oninput"
+           class="form-control form-control-lg"
+           placeholder="Type name here to search" />
+    <button type="button" class="input-group-text btn-success"
+            @onclick="(async ()=>{await ViewProducts(); })">
+        View
+    </button>
+</div>
+@if (DisplaySearchResult && products != null && selectedProduct == null)
+{
+    <div style="overflow-y:auto;max-height:300px;border:1px solid silver;padding-top:5px">
+        <ul style="list-style-type:none">
+            @foreach (var item in products)
+            {
+                <li style="cursor:pointer"
+            @onclick="(async()=>{await SelectProduct(item);})"
+            @key="item.ProductId">@item.ProductName</li>
+            }
+
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool DisplaySearchResult { get; set; } = false;
+    private string? _productName;
+    public string ProductNameToSearch
+    {
+        get => _productName; 
+        set
+        {
+            _productName = value;
+            if(!string.IsNullOrWhiteSpace(value) && value.Length > 2)
+            {
+                LoadProducts();
+            }
+        }
+    }
+    private List<Product>? products;
+    private Product? selectedProduct = null;
+    [Parameter]
+    public EventCallback<List<Product>> OnSearchProduct { get; set; }
+
+    private async Task ViewProducts()
+    {
+        await LoadProducts();
+    }
+    private async Task SelectProduct(Product prd)
+    {
+        await OnProductSelected.InvokeAsync(prd);
+        selectedProduct = prd;
+        ProductNameToSearch = string.Empty;
+    }
+    private async Task LoadProducts()
+    {
+        products = (await ViewProductsByNameUseCase.ExecuteAsync(ProductNameToSearch ?? string.Empty))?.ToList();
+        await OnSearchProduct.InvokeAsync(products);
+        selectedProduct = null;
+        StateHasChanged();
+    }
+    [Parameter]
+    public EventCallback<Product> OnProductSelected { get; set; }
+}
